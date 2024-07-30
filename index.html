@@ -277,8 +277,8 @@ function displayChannels(channels) {
 
 function playChannel(channel) {
     const url = channel.url;
-    const isDASH = url.includes('.mpd'); // Use includes to check for .mpd
-    const isHLS = url.includes('.m3u8'); // Use includes to check for .m3u8
+    const isDASH = url.includes('.mpd');
+    const isHLS = url.includes('.m3u8');
 
     let source;
     let drmConfig = {};
@@ -286,12 +286,14 @@ function playChannel(channel) {
     if (isDASH) {
         source = { dash: url, title: channel.name };
 
-        // If Widevine DRM is present, set DRM configuration
+        // If Widevine DRM is present, set DRM configuration with LA_URL
         if (channel.licenseKey) {
             console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
             drmConfig = {
-                widevine: {
-                    licenseURL: channel.licenseKey
+                drm: {
+                    widevine: {
+                        LA_URL: channel.licenseKey
+                    }
                 }
             };
         }
