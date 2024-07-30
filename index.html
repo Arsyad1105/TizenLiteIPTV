@@ -67,6 +67,12 @@
             margin-top: 20px;
         }
 
+        #player {
+            display: none; /* Initially hide the player */
+            width: 100%;
+            height: 80vh; /* Full height of viewport */
+        }
+
         #errorContainer {
             color: red;
             margin-top: 20px;
@@ -93,12 +99,6 @@
 
         button:hover {
             background-color: #0056b3; /* Darker shade for button hover */
-        }
-
-        #player {
-            display: none; /* Initially hide the player */
-            width: 100%;
-            height: 80vh; /* Full height of viewport */
         }
     </style>
 </head>
@@ -162,18 +162,18 @@ function setupPlayer() {
     var bufferConfig = {};
     var bufferLevels = {};
     bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
-    bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10;
+    bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10,
     bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
     bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
     var conf = {
-        key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-        playback: {
-            autoplay: true,
+        key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+        playback : {
+            autoplay : true,
         },
-        tweaks: {
-            file_protocol: true,
-            app_id: "com.bitmovin.demo.webapp",
+        tweaks : {
+            file_protocol : true,
+            app_id : "com.bitmovin.demo.webapp",
             BACKWARD_BUFFER_PURGE_INTERVAL: 10,
         },
         buffer: bufferConfig,
@@ -256,14 +256,26 @@ function playChannel(channel) {
         title: channel.name,
     };
 
+    // Debugging: Log the visibility change
+    console.log('Showing player container');
+    
     // Show the player container
-    document.getElementById('playerContainer').style.display = 'block';
+    const playerContainer = document.getElementById('playerContainer');
+    playerContainer.style.display = 'block';
 
-    player.load(source).then(() => {
-        console.log(`Playing channel: ${channel.name}`);
-    }).catch(error => {
-        console.error(`Error playing channel: ${channel.name}`, error);
-    });
+    // Debugging: Check if the player container is now visible
+    console.log('Player container style:', playerContainer.style.display);
+
+    // Ensure the player is initialized and then load the source
+    if (player) {
+        player.load(source).then(() => {
+            console.log(`Playing channel: ${channel.name}`);
+        }).catch(error => {
+            console.error(`Error playing channel: ${channel.name}`, error);
+        });
+    } else {
+        console.error('Player is not initialized.');
+    }
 }
 
 function setupControllerEvents() {
