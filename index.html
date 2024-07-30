@@ -58,11 +58,6 @@ h1 {
     background-color: #fff;
 }
 
-#channelList li.selected {
-    background-color: #007bff;
-    color: #fff;
-}
-
 #channelList li:hover {
     background-color: #e0e0e0;
 }
@@ -150,7 +145,6 @@ button:hover {
 
 <script>
 var player;
-var selectedIndex = -1;
 
 window.onload = function() {
   setupPlayer();
@@ -174,23 +168,19 @@ function setupPlayer() {
 
   var bufferConfig = {};
   var bufferLevels = {};
-  bufferLevels[bitmovin.player.media.BufferType.Video] = 30;
-  bufferLevels[bitmovin.player.media.BufferType.Audio] = 20;
-  bufferConfig[bitmovin.player.media.BufferType.Video] = bufferLevels;
-  bufferConfig[bitmovin.player.media.BufferType.Audio] = bufferLevels;
+  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
+  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10,
+  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
+  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
   var conf = {
-    key: "YOUR_BITMOVIN_PLAYER_KEY",
-    source: {
-      dash: "https://bitmovin.com/demos/drm/manifest.mpd",
-      hls: "https://bitmovin.com/demos/drm/manifest.m3u8",
-      hlsWidevine: "https://bitmovin.com/demos/drm/manifest.m3u8",
-      mpd: "https://bitmovin.com/demos/drm/manifest.mpd",
-      mpdWidevine: "https://bitmovin.com/demos/drm/manifest.mpd",
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback : {
+      autoplay : true,
     },
-    style: {
-      appName: "Bitmovin Player Demo",
-      appId: "bitmovin.demo.webapp",
+    tweaks : {
+      file_protocol : true,
+      app_id : "com.bitmovin.demo.webapp",
       BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
     buffer: bufferConfig,
@@ -220,7 +210,7 @@ function loadM3U() {
     fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(HTTP error! status: ${response.status});
             }
             return response.text();
         })
@@ -230,7 +220,7 @@ function loadM3U() {
         })
         .catch(error => {
             console.error('Error fetching M3U:', error);
-            errorContainer.textContent = `Error loading M3U: ${error.message}`;
+            errorContainer.textContent = Error loading M3U: ${error.message};
         });
 }
 
@@ -259,18 +249,12 @@ function displayChannels(channels) {
     const channelList = document.getElementById('channelList');
     channelList.innerHTML = '';
 
-    channels.forEach((channel, index) => {
+    channels.forEach(channel => {
         const li = document.createElement('li');
         li.textContent = channel.name;
-        li.setAttribute('data-url', channel.url); // Add data-url attribute
         li.onclick = () => playChannel(channel);
         channelList.appendChild(li);
     });
-
-    // Automatically highlight the first channel
-    if (channels.length > 0) {
-        selectChannel(0);
-    }
 }
 
 function playChannel(channel) {
@@ -286,60 +270,42 @@ function playChannel(channel) {
     // Ensure the player is initialized and then load the source
     if (player) {
         player.load(source).then(() => {
-            console.log(`Playing channel: ${channel.name}`);
+            console.log(Playing channel: ${channel.name});
         }).catch(error => {
-            console.error(`Error playing channel: ${channel.name}`, error);
+            console.error(Error playing channel: ${channel.name}, error);
         });
     } else {
         console.error('Player is not initialized.');
     }
 }
 
-function selectChannel(index) {
-    const channelListItems = document.querySelectorAll('#channelList li');
-    if (selectedIndex >= 0) {
-        channelListItems[selectedIndex].classList.remove('selected');
-    }
-
-    if (index >= 0 && index < channelListItems.length) {
-        selectedIndex = index;
-        channelListItems[selectedIndex].classList.add('selected');
-        channelListItems[selectedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
 function setupControllerEvents() {
+  tizen.tvinputdevice.registerKey('MediaPlayPause');
+  tizen.tvinputdevice.registerKey('ColorF0Red');
+
   document.addEventListener('keydown', function(e) {
     switch (e.keyCode) {
+      case tizen.tvinputdevice.getKey('MediaPlayPause').code:
+        if (player.isPlaying()) {
+          player.pause();
+        } else {
+          player.play();
+        }
+        break;
       case 37: // LEFT arrow
-        // Example action for LEFT arrow
         break;
       case 38: // UP arrow
-        if (selectedIndex > 0) {
-            selectChannel(selectedIndex - 1);
-        }
         break;
       case 39: // RIGHT arrow
-        // Example action for RIGHT arrow
         break;
       case 40: // DOWN arrow
-        const channelListItems = document.querySelectorAll('#channelList li');
-        if (selectedIndex < channelListItems.length - 1) {
-            selectChannel(selectedIndex + 1);
-        }
         break;
       case 13: // OK button
-        const channelListItems = document.querySelectorAll('#channelList li');
-        if (selectedIndex >= 0 && selectedIndex < channelListItems.length) {
-            playChannel({
-                name: channelListItems[selectedIndex].textContent,
-                url: channelListItems[selectedIndex].getAttribute('data-url')
-            });
-        }
         break;
       case 10009: // RETURN button
         // Hide the player container (overlay)
         document.getElementById('playerContainer').style.display = 'none';
+        tizen.application.getCurrentApplication().exit();
         break;
       default:
         console.log('Key code : ' + e.keyCode);
@@ -348,6 +314,7 @@ function setupControllerEvents() {
   });
 }
 </script>
+
 
 </body>
 </html>
