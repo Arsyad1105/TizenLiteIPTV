@@ -33,9 +33,6 @@
     <script type="text/javascript" src="https://cdn.bitmovin.com/player/web/8/modules/bitmovinplayer-smooth.js"></script>
     <script type="text/javascript" src="https://cdn.bitmovin.com/player/web/8/modules/bitmovinplayer-tizen.js"></script>
     <script type="text/javascript" src="https://cdn.bitmovin.com/player/web/8/bitmovinplayer-ui.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV Player</title>
     <link rel="stylesheet" href="https://cdn.bitmovin.com/player/web/8/bitmovinplayer-ui.css">
 
     <!-- Bootstrap 3.3.7 -->
@@ -43,215 +40,265 @@
     <link rel="stylesheet" href="css/bitmovin-demo.css">
 
     <script type="text/javascript" src="js/main.js"></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f8f8f8;
-            color: #333;
-            margin: 0;
-            overflow: hidden; /* Prevent scrolling when player is full-screen */
-        }
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f8f8f8; /* Light background color for better contrast */
+    color: #333; /* Dark text color for better readability */
+}
 
-        h1 {
-            margin-top: 20px;
-            color: #333;
-        }
+h1 {
+    margin-top: 20px;
+    color: #333; /* Ensure heading is visible */
+}
 
-        #channelList {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-            margin: 20px auto;
-            width: 80%;
-        }
+#channelList {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
 
-        #channelList li {
-            cursor: pointer;
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-            color: #333;
-            background-color: #fff;
-        }
+#channelList li {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    color: #333; /* Dark text color for list items */
+    background-color: #fff; /* Light background color for list items */
+}
 
-        #channelList li:hover {
-            background-color: #e0e0e0;
-        }
+#channelList li:hover {
+    background-color: #e0e0e0; /* Slightly darker background on hover */
+}
 
-        #playerContainer {
-            position: fixed; /* Position fixed for full-screen */
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000;
-            display: none; /* Initially hidden */
-            z-index: 1000; /* Ensure it's on top of other elements */
-        }
+#playerContainer {
+    margin-top: 20px;
+}
 
-        #errorContainer {
-            color: red;
-            margin-top: 20px;
-        }
+#errorContainer {
+    color: red;
+    margin-top: 20px;
+}
 
-        #m3uUrlInput {
-            width: 80%;
-            padding: 10px;
-            margin: 20px auto;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            color: #000;
-            background-color: #fff;
-        }
+#m3uUrlInput {
+    width: 80%;
+    padding: 10px;
+    margin: 20px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #000; /* Black text color */
+    background-color: #fff; /* White background color for input field */
+}
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-        }
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff; /* Bootstrap primary color */
+    color: #fff;
+    cursor: pointer;
+}
 
-        button:hover {
-            background-color: #0056b3;
-        }
+button:hover {
+    background-color: #0056b3; /* Darker shade for button hover */
+}
     </style>
 </head>
 <body>
-    <h1>IPTV Player</h1>
-    <input type="text" id="m3uUrlInput" placeholder="Enter M3U URL">
-    <button id="loadM3UButton">Load M3U</button>
-    <ul id="channelList"></ul>
-    <div id="playerContainer">
-        <div id="player"></div>
+<div id="wrapper">
+
+    <div id="banner">
+        <div class="logo"><a href="https://bitmovin.com"><img src="images/bitmovin-logo.png"></a></div>
+        <div class="title"><h1 class="bitmovin-headline">Bitmovin Player Demo</h1></div>
+        <div class="clearfix"></div>
     </div>
-    <div id="errorContainer"></div>
 
-    <script src="https://cdn.bitmovin.com/player/web/8/bitmovinplayer.min.js"></script>
-    <script>
-        let player;
+    <div class="container-fluid">
+        <div class="content">
+            <div class="row bitmovin-description">
+                <div class="col-lg-12 text-center" id="source-names">
+                    <input type="text" id="m3uUrlInput" placeholder="Enter M3U URL" />
+                    <button onclick="loadM3U()">Load Channels</button>
+                    <div id="errorContainer"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-offset-1 col-md-10 col-lg-offset-2 col-lg-8">
+                    <ul id="channelList"></ul>
+                    <div id="player"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <p>For more information about the bitmovin player, please have a look at our online  <a href="https://developer.bitmovin.com" target="_blank">Developer Section</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        document.getElementById('loadM3UButton').addEventListener('click', () => {
-            const url = document.getElementById('m3uUrlInput').value;
-            if (url) {
-                loadM3U(url);
+<script>
+var player;
+
+window.onload = function() {
+  setupPlayer();
+  setupControllerEvents();
+}
+
+function setupPlayer() {
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.polyfill.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['engine-bitmovin'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['container-mp4'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['container-ts'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.mserenderer.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.abr.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.drm.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.xml.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.dash.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
+
+  var bufferConfig = {};
+  var bufferLevels = {};
+  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
+  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10,
+  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
+  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
+
+  var conf = {
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback : {
+      autoplay : true,
+    },
+    tweaks : {
+      file_protocol : true,
+      app_id : "com.bitmovin.demo.webapp",
+      BACKWARD_BUFFER_PURGE_INTERVAL: 10,
+    },
+    buffer: bufferConfig,
+    ui: false,
+  };
+
+  var container = document.getElementById('player');
+
+  player = new bitmovin.player.core.Player(container, conf);
+
+  var uiManager = new bitmovin.playerui.UIFactory.buildDefaultTvUI(player);
+
+  player.on(bitmovin.player.core.PlayerEvent.Warning, function(data) {
+    console.log("Warning Event: " + JSON.stringify(data));
+  });
+
+  player.on(bitmovin.player.core.PlayerEvent.Error, function(data) {
+    console.log("Error Event: " + JSON.stringify(data));
+  });
+}
+
+function loadM3U() {
+    const url = document.getElementById('m3uUrlInput').value;
+    const errorContainer = document.getElementById('errorContainer');
+    errorContainer.textContent = ''; // Clear previous errors
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            return response.text();
+        })
+        .then(content => {
+            const channels = parseM3U(content);
+            displayChannels(channels);
+        })
+        .catch(error => {
+            console.error('Error fetching M3U:', error);
+            errorContainer.textContent = `Error loading M3U: ${error.message}`;
         });
+}
 
-        function loadM3U(url) {
-            fetch(url)
-                .then(response => response.text())
-                .then(content => {
-                    const channels = parseM3U(content);
-                    displayChannels(channels);
-                })
-                .catch(error => {
-                    console.error('Error fetching M3U:', error);
-                    document.getElementById('errorContainer').textContent = `Error loading M3U: ${error.message}`;
-                });
+function parseM3U(content) {
+    const lines = content.split('\n');
+    const channels = [];
+    let currentChannel = {};
+
+    lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith('#EXTINF:')) {
+            const [, info] = line.split('#EXTINF:');
+            const [duration, ...rest] = info.split(',');
+            currentChannel = { duration: parseInt(duration, 10), name: rest.join(',').trim() };
+        } else if (line && !line.startsWith('#')) {
+            currentChannel.url = line;
+            channels.push(currentChannel);
+            currentChannel = {};
         }
+    });
 
-        function parseM3U(content) {
-            const lines = content.split('\n');
-            const channels = [];
-            let currentChannel = {};
+    return channels;
+}
 
-            lines.forEach(line => {
-                line = line.trim();
-                if (line.startsWith('#EXTINF:')) {
-                    const [, info] = line.split('#EXTINF:');
-                    const [duration, ...rest] = info.split(',');
-                    currentChannel = { duration: parseInt(duration, 10), name: rest.join(',').trim() };
-                } else if (line && !line.startsWith('#')) {
-                    currentChannel.url = line;
-                    channels.push(currentChannel);
-                    currentChannel = {};
-                }
-            });
+function displayChannels(channels) {
+    const channelList = document.getElementById('channelList');
+    channelList.innerHTML = '';
 
-            return channels;
+    channels.forEach(channel => {
+        const li = document.createElement('li');
+        li.textContent = channel.name;
+        li.onclick = () => playChannel(channel);
+        channelList.appendChild(li);
+    });
+}
+
+function playChannel(channel) {
+    const source = {
+        hls: channel.url,
+        title: channel.name,
+    };
+
+    player.load(source).then(() => {
+        console.log(`Playing channel: ${channel.name}`);
+    }).catch(error => {
+        console.error(`Error playing channel: ${channel.name}`, error);
+    });
+}
+
+function setupControllerEvents() {
+  tizen.tvinputdevice.registerKey('MediaPlayPause');
+  tizen.tvinputdevice.registerKey('ColorF0Red');
+
+  // add eventListener for keydown
+  document.addEventListener('keydown', function(e) {
+    switch (e.keyCode) {
+      case tizen.tvinputdevice.getKey('MediaPlayPause').code:
+        if (player.isPlaying()) {
+          player.pause();
+        } else {
+          player.play();
         }
+        break;
+      case 37: // LEFT arrow
+        break;
+      case 38: // UP arrow
+        break;
+      case 39: // RIGHT arrow
+        break;
+      case 40: // DOWN arrow
+        break;
+      case 13: // OK button
+        break;
+      case 10009: // RETURN button
+        tizen.application.getCurrentApplication().exit();
+        break;
+      default:
+        console.log('Key code : ' + e.keyCode);
+        break;
+    }
+  });
+}
+</script>
 
-        function displayChannels(channels) {
-            const channelList = document.getElementById('channelList');
-            channelList.innerHTML = '';
-
-            channels.forEach(channel => {
-                const li = document.createElement('li');
-                li.textContent = channel.name;
-                li.onclick = () => playChannel(channel);
-                channelList.appendChild(li);
-            });
-        }
-
-        function playChannel(channel) {
-            const playerContainer = document.getElementById('playerContainer');
-            const source = {
-                title: channel.name,
-            };
-
-            // Detect the type of stream based on the URL
-            if (channel.url.includes('.m3u8')) {
-                source.hls = channel.url;
-            } else if (channel.url.includes('.mpd')) {
-                source.dash = channel.url;
-            } else if (channel.url.includes('kodiprop') || channel.url.includes('widevine')) {
-                source.drm = {
-                    widevine: {
-                        LA_URL: channel.url
-                    }
-                };
-            } else {
-                document.getElementById('errorContainer').textContent = 'Unsupported URL format.';
-                return;
-            }
-
-            if (!player) {
-                setupPlayer();
-            }
-
-            playerContainer.style.display = 'block'; // Show the player container
-            player.load(source).then(() => {
-                console.log(`Playing channel: ${channel.name}`);
-            }).catch(error => {
-                console.error(`Error playing channel: ${channel.name}`, error);
-                document.getElementById('errorContainer').textContent = `Player error: ${error.message}`;
-            });
-        }
-
-        function setupPlayer() {
-            const container = document.getElementById('player');
-            
-            // Ensure the Bitmovin player script is loaded and accessible
-            if (typeof bitmovin !== 'undefined' && bitmovin.player) {
-                const conf = {
-                    key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-                    playback: {
-                        autoplay: true,
-                    },
-                    tweaks: {
-                        file_protocol: true,
-                        app_id: "com.bitmovin.demo.webapp",
-                        BACKWARD_BUFFER_PURGE_INTERVAL: 10,
-                    },
-                    ui: false,
-                };
-
-                player = new bitmovin.player.Player(container, conf);
-
-                player.on(bitmovin.player.PlayerEvent.Warning, function(data) {
-                    console.log("Warning Event: " + JSON.stringify(data));
-                });
-
-                player.on(bitmovin.player.PlayerEvent.Error, function(data) {
-                    console.log("Error Event: " + JSON.stringify(data));
-                    document.getElementById('errorContainer').textContent = `Player error: ${data.message}`;
-                });
-            } else {
-                document.getElementById('errorContainer').textContent = 'Bitmovin Player not loaded.';
-            }
-        }
-    </script>
 </body>
 </html>
