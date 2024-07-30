@@ -58,6 +58,11 @@ h1 {
     background-color: #fff;
 }
 
+#channelList li.selected {
+    background-color: #007bff;
+    color: #fff;
+}
+
 #channelList li:hover {
     background-color: #e0e0e0;
 }
@@ -145,6 +150,7 @@ button:hover {
 
 <script>
 var player;
+var selectedIndex = -1;
 
 window.onload = function() {
   setupPlayer();
@@ -249,12 +255,17 @@ function displayChannels(channels) {
     const channelList = document.getElementById('channelList');
     channelList.innerHTML = '';
 
-    channels.forEach(channel => {
+    channels.forEach((channel, index) => {
         const li = document.createElement('li');
         li.textContent = channel.name;
         li.onclick = () => playChannel(channel);
         channelList.appendChild(li);
     });
+
+    // Automatically highlight the first channel
+    if (channels.length > 0) {
+        selectChannel(0);
+    }
 }
 
 function playChannel(channel) {
@@ -279,33 +290,51 @@ function playChannel(channel) {
     }
 }
 
-function setupControllerEvents() {
-  tizen.tvinputdevice.registerKey('MediaPlayPause');
-  tizen.tvinputdevice.registerKey('ColorF0Red');
+function selectChannel(index) {
+    const channelListItems = document.querySelectorAll('#channelList li');
+    if (selectedIndex >= 0) {
+        channelListItems[selectedIndex].classList.remove('selected');
+    }
 
+    if (index >= 0 && index < channelListItems.length) {
+        selectedIndex = index;
+        channelListItems[selectedIndex].classList.add('selected');
+        channelListItems[selectedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function setupControllerEvents() {
   document.addEventListener('keydown', function(e) {
     switch (e.keyCode) {
-      case tizen.tvinputdevice.getKey('MediaPlayPause').code:
-        if (player.isPlaying()) {
-          player.pause();
-        } else {
-          player.play();
-        }
-        break;
       case 37: // LEFT arrow
+        // Example action for LEFT arrow
         break;
       case 38: // UP arrow
+        if (selectedIndex > 0) {
+            selectChannel(selectedIndex - 1);
+        }
         break;
       case 39: // RIGHT arrow
+        // Example action for RIGHT arrow
         break;
       case 40: // DOWN arrow
+        const channelListItems = document.querySelectorAll('#channelList li');
+        if (selectedIndex < channelListItems.length - 1) {
+            selectChannel(selectedIndex + 1);
+        }
         break;
       case 13: // OK button
+        const channelListItems = document.querySelectorAll('#channelList li');
+        if (selectedIndex >= 0 && selectedIndex < channelListItems.length) {
+            playChannel({
+                name: channelListItems[selectedIndex].textContent,
+                url: channelListItems[selectedIndex].getAttribute('data-url')
+            });
+        }
         break;
       case 10009: // RETURN button
         // Hide the player container (overlay)
         document.getElementById('playerContainer').style.display = 'none';
-        tizen.application.getCurrentApplication().exit();
         break;
       default:
         console.log('Key code : ' + e.keyCode);
@@ -314,7 +343,6 @@ function setupControllerEvents() {
   });
 }
 </script>
-
 
 </body>
 </html>
