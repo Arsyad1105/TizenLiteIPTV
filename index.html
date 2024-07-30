@@ -200,157 +200,153 @@ function setupPlayer() {
   };
 
   player = new bitmovin.player.core.Player(document.getElementById('player'), conf);
-
-  // Load UI
-  var uiManager = bitmovin.playerui.UIManager.Factory.buildDefaultUI(player);
 }
 
-function setupControllerEvents() {
-    document.addEventListener('keydown', function(event) {
-        switch(event.keyCode) {
-            case 13: // Enter
-                if (selectedIndex >= 0 && selectedIndex < channels.length) {
-                    playChannel(channels[selectedIndex]);
-                }
-                break;
-            case 38: // Up
-                if (selectedIndex > 0) {
-                    selectChannel(selectedIndex - 1);
-                }
-                break;
-            case 40: // Down
-                if (selectedIndex < channels.length - 1) {
-                    selectChannel(selectedIndex + 1);
-                }
-                break;
-            case 10009: // Return (Tizen)
-                if (player.isPlaying()) {
-                    player.pause();
-                } else {
-                    player.play();
-                }
-                break;
-            case 10182: // Exit (Tizen)
-                if (player) {
-                    player.destroy();
-                }
-                tizen.application.getCurrentApplication().exit();
-                break;
-            case 417: // Play/Pause (Tizen remote control)
-                if (player.isPlaying()) {
-                    player.pause();
-                } else {
-                    player.play();
-                }
-                break;
-            case 1023: // Subtitle button (Tizen remote control)
-                toggleSubtitles();
-                break;
-            default:
-                break;
-        }
-    });
-}
+function parseM3U(m3uText) {
+  var lines = m3uText.split('\n');
+  var channel = {};
+  var widevine = {};
+  var result = [];
 
-function toggleSubtitles() {
-    const subtitleTracks = player.getAvailableTextTracks();
-    if (subtitleTracks.length > 0) {
-        const currentTrack = player.getActiveTextTrack();
-        const currentIndex = subtitleTracks.indexOf(currentTrack);
-        const nextIndex = (currentIndex + 1) % subtitleTracks.length;
-        player.setTextTrack(subtitleTracks[nextIndex].id);
+  lines.forEach(line => {
+    if (line.startsWith('#EXTINF')) {
+      if (channel.url) {
+        result.push(channel);
+      }
+      channel = {
+        url: '',
+        title: '',
+        widevine: {}
+      };
+      var titleMatch = line.match(/,(.*)/);
+      if (titleMatch) {
+        channel.title = titleMatch[1];
+      }
+    } else if (line.startsWith('http')) {
+      channel.url = line.trim();
+    } else if (line.startsWith('#KODIPROP')) {
+      var licenseKeyMatch = line.match(/license_key=(.*)/);
+      if (licenseKeyMatch) {
+        channel.widevine.licenseUrl = licenseKeyMatch[1];
+      }
+      var licenseTypeMatch = line.match(/license_type=(.*)/);
+      if (licenseTypeMatch) {
+        channel.widevine.licenseType = licenseTypeMatch[1];
+      }
     }
+  });
+
+  if (channel.url) {
+    result.push(channel);
+  }
+
+  return result;
 }
 
 function loadM3U() {
-    var m3uUrl = document.getElementById('m3uUrlInput').value;
-    fetch(m3uUrl)
-        .then(response => response.text())
-        .then(data => {
-            channels = parseM3U(data);
-            displayChannels(channels);
-        })
-        .catch(error => {
-            document.getElementById('errorContainer').innerText = 'Failed to load M3U file: ' + error.message;
-        });
-}
-
-function parseM3U(data) {
-    var lines = data.split('\n');
-    var channels = [];
-    var currentChannel = null;
-
-    lines.forEach(line => {
-        if (line.startsWith('#EXTINF:')) {
-            currentChannel = { info: line, url: '' };
-        } else if (line.startsWith('http') && currentChannel) {
-            currentChannel.url = line;
-            channels.push(currentChannel);
-            currentChannel = null;
-        }
+  var m3uUrl = document.getElementById('m3uUrlInput').value;
+  fetch(m3uUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.text();
+    })
+    .then(data => {
+      channels = parseM3U(data); // Store channels in the global variable
+      displayChannels(channels);
+      selectedIndex = -1; // Reset the selected index
+    })
+    .catch(error => {
+      console.error('Error fetching M3U file:', error);
+      document.getElementById('errorContainer').innerText = 'Error loading M3U file. Please check the URL and try again.';
     });
-
-    return channels;
 }
 
 function displayChannels(channels) {
-    var channelList = document.getElementById('channelList');
-    channelList.innerHTML = '';
+  var channelList = document.getElementById('channelList');
+  channelList.innerHTML = '';
 
-    channels.forEach((channel, index) => {
-        var listItem = document.createElement('li');
-        listItem.textContent = channel.info.split(',')[1] || 'Unnamed Channel';
-        listItem.onclick = () => selectChannel(index);
-        channelList.appendChild(listItem);
-    });
-
-    // Automatically select the first channel
-    if (channels.length > 0) {
-        selectChannel(0);
-    }
+  channels.forEach((channel, index) => {
+    var listItem = document.createElement('li');
+    listItem.innerText = channel.title;
+    listItem.onclick = function() {
+      selectChannel(index);
+    };
+    channelList.appendChild(listItem);
+  });
 }
 
 function selectChannel(index) {
-    var channelList = document.getElementById('channelList');
-    var items = channelList.getElementsByTagName('li');
+  if (selectedIndex !== -1) {
+    var previousSelected = document.querySelectorAll('#channelList li')[selectedIndex];
+    previousSelected.classList.remove('selected');
+  }
+  selectedIndex = index;
+  var selected = document.querySelectorAll('#channelList li')[index];
+  selected.classList.add('selected');
 
-    if (selectedIndex >= 0) {
-        items[selectedIndex].classList.remove('selected');
-    }
-
-    selectedIndex = index;
-    items[selectedIndex].classList.add('selected');
+  var channel = channels[selectedIndex];
+  playChannel(channel);
 }
 
 function playChannel(channel) {
-    document.getElementById('playerContainer').style.display = 'block'; // Show the player container
-    var config = {
-        "key": "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-        "playback": {
-            "autoplay": true
-        },
-        "source": {
-            "dash": channel.url.endsWith('.mpd') ? channel.url : null,
-            "hls": channel.url.endsWith('.m3u8') ? channel.url : null,
-            "progressive": channel.url.endsWith('.mp4') ? { "url": channel.url } : null,
-            "drm": {
-                "widevine": {
-                    "LA_URL": extractWidevineUrl(channel.info)
-                }
-            }
-        }
-    };
+  var source = {
+    hls: channel.url.includes('.m3u8') ? channel.url : undefined,
+    dash: channel.url.includes('.mpd') ? channel.url : undefined,
+    progressive: !channel.url.includes('.m3u8') && !channel.url.includes('.mpd') ? channel.url : undefined,
+    drm: {}
+  };
 
-    player.load(config).then(function() {
-        console.log('Successfully loaded source');
-    }).catch(function(reason) {
-        console.error('Error while loading source', reason);
-    });
+  if (channel.widevine.licenseUrl) {
+    source.drm = {
+      widevine: {
+        LA_URL: channel.widevine.licenseUrl,
+      }
+    };
+  }
+
+  player.load(source).then(() => {
+    document.getElementById('playerContainer').style.display = 'block';
+    player.play();
+  }).catch(error => {
+    console.error('Error loading channel:', error);
+  });
 }
 
-function extractWidevineUrl(info) {
-    var match = info.match(/#KODIPROP:inputstream\.adaptive\.license_key=([^ \n]+)/);
-    return match ? match[1] : '';
+function setupControllerEvents() {
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      navigateChannels(-1);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      navigateChannels(1);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      if (selectedIndex !== -1) {
+        playChannel(channels[selectedIndex]);
+      }
+    }
+  });
+}
+
+function navigateChannels(direction) {
+  if (channels.length === 0) {
+    return;
+  }
+
+  selectedIndex += direction;
+
+  if (selectedIndex < 0) {
+    selectedIndex = channels.length - 1;
+  } else if (selectedIndex >= channels.length) {
+    selectedIndex = 0;
+  }
+
+  var channelListItems = document.querySelectorAll('#channelList li');
+  channelListItems.forEach(item => item.classList.remove('selected'));
+  channelListItems[selectedIndex].classList.add('selected');
 }
 </script>
 </body>
