@@ -209,7 +209,7 @@ function setupPlayer() {
     console.log("Error Event: " + JSON.stringify(data));
   });
 }
-    
+
 function loadM3U() {
     const url = document.getElementById('m3uUrlInput').value;
     const errorContainer = document.getElementById('errorContainer');
@@ -218,7 +218,7 @@ function loadM3U() {
     fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error(HTTP error! status: ${response.status});
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.text();
         })
@@ -228,7 +228,7 @@ function loadM3U() {
         })
         .catch(error => {
             console.error('Error fetching M3U:', error);
-            errorContainer.textContent = Error loading M3U: ${error.message};
+            errorContainer.textContent = `Error loading M3U: ${error.message}`;
         });
 }
 
@@ -243,11 +243,11 @@ function parseM3U(content) {
             const [, info] = line.split('#EXTINF:');
             const [duration, ...rest] = info.split(',');
             currentChannel = { duration: parseInt(duration, 10), name: rest.join(',').trim() };
-        } if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
+        } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
             // Extract the license URL for Widevine
             const [, licenseKey] = line.split('inputstream.adaptive.license_key=');
             currentChannel.licenseKey = licenseKey;
-        } if (line && !line.startsWith('#')) {
+        } else if (line && !line.startsWith('#')) {
             currentChannel.url = line;
             channels.push(currentChannel);
             currentChannel = {};
@@ -256,6 +256,7 @@ function parseM3U(content) {
 
     return channels;
 }
+
 
 function displayChannels(channels) {
     const channelList = document.getElementById('channelList');
@@ -277,8 +278,8 @@ function displayChannels(channels) {
 
 function playChannel(channel) {
     const url = channel.url;
-    const isDASH = url.includes('.mpd'); // Use includes to check for .mpd
-    const isHLS = url.includes('.m3u8'); // Use includes to check for .m3u8
+    const isDASH = url.endsWith('.mpd');
+    const isHLS = url.endsWith('.m3u8');
 
     let source;
     let drmConfig = {};
@@ -321,7 +322,7 @@ function playChannel(channel) {
         console.error('Player is not initialized.');
     }
 }
-    
+
 function selectChannel(index) {
     const channelList = document.getElementById('channelList');
     const items = channelList.querySelectorAll('li');
