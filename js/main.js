@@ -30,7 +30,7 @@ function setupPlayer() {
   bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
   var conf = {
-    key : "YOUR_PLAYER_KEY",
+    key : "fba29d36-759d-4de3-971d-b0a89d7f84e8",
     playback : {
       autoplay : true,
     },
@@ -40,7 +40,6 @@ function setupPlayer() {
       BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
     analytics : {
-      key: 'YOUR ANALYTICS KEY',
       videoId: 'YOUR VIDEO ID',
       title: 'A descriptive video title'
     },
