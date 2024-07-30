@@ -171,17 +171,27 @@ function setupPlayer() {
   bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.smooth.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
 
+  var bufferConfig = {};
+  var bufferLevels = {};
+  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
+  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10;
+  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
+  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
+
   var conf = {
-    key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-    playback: {
-      autoplay: true,
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback : {
+      autoplay : true,
     },
-    tweaks: {
-      file_protocol: true,
-      app_id: "com.bitmovin.demo.webapp",
+    tweaks : {
+      file_protocol : true,
+      app_id : "com.bitmovin.demo.webapp",
+      BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
+    buffer: bufferConfig,
     ui: false,
   };
 
@@ -199,7 +209,7 @@ function setupPlayer() {
     console.log("Error Event: " + JSON.stringify(data));
   });
 }
-
+    
 function loadM3U() {
     const url = document.getElementById('m3uUrlInput').value;
     const errorContainer = document.getElementById('errorContainer');
