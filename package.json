@@ -1,0 +1,22 @@
+{
+  "name": "@arsyad1105/TizenLiteIPTV",
+  "appName": "TizenLiteIPTV",
+  "version": "0.0.1",
+  "description": "TizenLiteIPTV allow users to use IPTV m3u to watch and it's the first IPTV that support Widevine DRM for decryption of streams.",
+  "packageType": "mods",
+  "websiteURL": "https://arsyad1105.github.io/TizenLiteIPTV/",
+  "author": "Owen Ramaekers",
+  "keys": [
+    "MediaPlayPause",
+    "MediaPlay",
+    "MediaPause",
+    "MediaStop",
+    "MediaTrackPrevious",
+    "MediaTrackNext",
+    "MediaRewind",
+    "MediaFastForward"
+  ],
+  "repository": {
+    "url": "https://github.com/Arsyad1105/TizenLiteIPTV"
+  }
+}
