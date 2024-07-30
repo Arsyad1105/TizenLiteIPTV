@@ -44,10 +44,18 @@ h1 {
     color: #333;
 }
 
+#channelListContainer {
+    height: 300px; /* Adjust height as needed */
+    overflow-y: auto; /* Enable vertical scrolling */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
 #channelList {
     list-style: none;
     padding: 0;
-    text-align: left;
+    margin: 0;
 }
 
 #channelList li {
@@ -133,7 +141,9 @@ button:hover {
             </div>
             <div class="row">
                 <div class="col-md-offset-1 col-md-10 col-lg-offset-2 col-lg-8">
-                    <ul id="channelList"></ul>
+                    <div id="channelListContainer">
+                        <ul id="channelList"></ul>
+                    </div>
                     <div id="playerContainer">
                         <div id="player"></div>
                     </div>
@@ -154,8 +164,15 @@ var selectedIndex = -1;
 var channels = []; // Store channels globally to access them in key events
 
 window.onload = function() {
-  setupPlayer();
-  setupControllerEvents();
+    setupPlayer();
+    setupControllerEvents();
+    
+    // Retrieve and set the M3U URL from the cookie if available
+    var savedUrl = getCookie('m3uUrl');
+    if (savedUrl) {
+        document.getElementById('m3uUrlInput').value = savedUrl;
+        loadM3U(); // Optionally auto-load channels if URL is present
+    }
 }
 
 function setupPlayer() {
@@ -211,23 +228,27 @@ function setupPlayer() {
 }
 
 function loadM3U() {
-  var m3uUrl = document.getElementById('m3uUrlInput').value;
-  fetch(m3uUrl)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.text();
-    })
-    .then(data => {
-      channels = parseM3U(data); // Store channels in the global variable
-      displayChannels(channels);
-      selectedIndex = -1; // Reset the selected index
-    })
-    .catch(error => {
-      console.error('Error fetching M3U file:', error);
-      document.getElementById('errorContainer').innerText = 'Error loading M3U file. Please check the URL and try again.';
-    });
+    var m3uUrl = document.getElementById('m3uUrlInput').value;
+    
+    // Set cookie with the URL
+    setCookie('m3uUrl', m3uUrl, 7); // Cookie expires in 7 days
+
+    fetch(m3uUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            channels = parseM3U(data); // Store channels in the global variable
+            displayChannels(channels);
+            selectedIndex = -1; // Reset the selected index
+        })
+        .catch(error => {
+            console.error('Error fetching M3U file:', error);
+            document.getElementById('errorContainer').innerText = 'Error loading M3U file. Please check the URL and try again.';
+        });
 }
 
 function parseM3U(m3uText) {
@@ -289,6 +310,26 @@ function displayChannels(channels) {
     }
 }
 
+function selectChannel(index) {
+    const channelList = document.getElementById('channelList');
+    const items = channelList.querySelectorAll('li');
+    
+    // Remove the 'selected' class from all items
+    items.forEach(item => item.classList.remove('selected'));
+    
+    // Add the 'selected' class to the currently selected item
+    if (items[index]) {
+        items[index].classList.add('selected');
+        selectedIndex = index;
+
+        // Scroll the selected item into view and center it
+        items[index].scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+}
+
 function playChannel(channel) {
   var source = {
     hls: channel.url.includes('.m3u8') ? channel.url : undefined,
@@ -311,20 +352,6 @@ function playChannel(channel) {
   }).catch(error => {
     console.error('Error loading channel:', error);
   });
-}
-
-function selectChannel(index) {
-    const channelList = document.getElementById('channelList');
-    const items = channelList.querySelectorAll('li');
-    
-    // Remove the 'selected' class from all items
-    items.forEach(item => item.classList.remove('selected'));
-    
-    // Add the 'selected' class to the currently selected item
-    if (items[index]) {
-        items[index].classList.add('selected');
-        selectedIndex = index;
-    }
 }
 
 function setupControllerEvents() {
@@ -368,6 +395,29 @@ function setupControllerEvents() {
         break;
     }
   });
+}
+
+// Function to set a cookie
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+// Function to get a cookie by name
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
 }
 
 </script>
