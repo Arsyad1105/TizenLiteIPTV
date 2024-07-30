@@ -174,19 +174,23 @@ function setupPlayer() {
 
   var bufferConfig = {};
   var bufferLevels = {};
-  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
-  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10,
-  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
-  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
+  bufferLevels[bitmovin.player.media.BufferType.Video] = 30;
+  bufferLevels[bitmovin.player.media.BufferType.Audio] = 20;
+  bufferConfig[bitmovin.player.media.BufferType.Video] = bufferLevels;
+  bufferConfig[bitmovin.player.media.BufferType.Audio] = bufferLevels;
 
   var conf = {
-    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-    playback : {
-      autoplay : true,
+    key: "YOUR_BITMOVIN_PLAYER_KEY",
+    source: {
+      dash: "https://bitmovin.com/demos/drm/manifest.mpd",
+      hls: "https://bitmovin.com/demos/drm/manifest.m3u8",
+      hlsWidevine: "https://bitmovin.com/demos/drm/manifest.m3u8",
+      mpd: "https://bitmovin.com/demos/drm/manifest.mpd",
+      mpdWidevine: "https://bitmovin.com/demos/drm/manifest.mpd",
     },
-    tweaks : {
-      file_protocol : true,
-      app_id : "com.bitmovin.demo.webapp",
+    style: {
+      appName: "Bitmovin Player Demo",
+      appId: "bitmovin.demo.webapp",
       BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
     buffer: bufferConfig,
@@ -258,6 +262,7 @@ function displayChannels(channels) {
     channels.forEach((channel, index) => {
         const li = document.createElement('li');
         li.textContent = channel.name;
+        li.setAttribute('data-url', channel.url); // Add data-url attribute
         li.onclick = () => playChannel(channel);
         channelList.appendChild(li);
     });
