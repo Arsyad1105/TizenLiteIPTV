@@ -150,9 +150,24 @@
         function playChannel(channel) {
             const playerContainer = document.getElementById('playerContainer');
             const source = {
-                hls: channel.url,
                 title: channel.name,
             };
+
+            // Detect the type of stream based on the URL
+            if (channel.url.includes('.m3u8')) {
+                source.hls = channel.url;
+            } else if (channel.url.includes('.mpd')) {
+                source.dash = channel.url;
+            } else if (channel.url.includes('kodiprop') || channel.url.includes('widevine')) {
+                source.drm = {
+                    widevine: {
+                        LA_URL: channel.url
+                    }
+                };
+            } else {
+                document.getElementById('errorContainer').textContent = 'Unsupported URL format.';
+                return;
+            }
 
             if (!player) {
                 setupPlayer();
@@ -163,6 +178,7 @@
                 console.log(`Playing channel: ${channel.name}`);
             }).catch(error => {
                 console.error(`Error playing channel: ${channel.name}`, error);
+                document.getElementById('errorContainer').textContent = `Player error: ${error.message}`;
             });
         }
 
