@@ -273,6 +273,7 @@ function displayChannels(channels) {
 function playChannel(channel) {
     const source = {
         hls: channel.url,
+        dash: channel.url,
         title: channel.name,
     };
 
