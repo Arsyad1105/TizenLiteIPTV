@@ -56,7 +56,6 @@ h1 {
     border-bottom: 1px solid #ccc;
     color: #333;
     background-color: #fff;
-    outline: none;
 }
 
 #channelList li.selected {
@@ -64,8 +63,7 @@ h1 {
     color: #fff;
 }
 
-#channelList li:hover,
-#channelList li:focus {
+#channelList li:hover {
     background-color: #e0e0e0;
 }
 
@@ -135,7 +133,7 @@ button:hover {
             </div>
             <div class="row">
                 <div class="col-md-offset-1 col-md-10 col-lg-offset-2 col-lg-8">
-                    <ul id="channelList" tabindex="0"></ul>
+                    <ul id="channelList"></ul>
                     <div id="playerContainer">
                         <div id="player"></div>
                     </div>
@@ -153,11 +151,11 @@ button:hover {
 <script>
 var player;
 var selectedIndex = -1;
+var channels = []; // Store channels globally to access them in key events
 
 window.onload = function() {
   setupPlayer();
   setupControllerEvents();
-  setupKeyboardEvents();
 }
 
 function setupPlayer() {
@@ -183,13 +181,13 @@ function setupPlayer() {
   bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
   var conf = {
-    key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-    playback: {
-      autoplay: true,
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback : {
+      autoplay : true,
     },
-    tweaks: {
-      file_protocol: true,
-      app_id: "com.bitmovin.demo.webapp",
+    tweaks : {
+      file_protocol : true,
+      app_id : "com.bitmovin.demo.webapp",
       BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
     buffer: bufferConfig,
@@ -224,7 +222,7 @@ function loadM3U() {
             return response.text();
         })
         .then(content => {
-            const channels = parseM3U(content);
+            channels = parseM3U(content); // Store channels globally
             displayChannels(channels);
         })
         .catch(error => {
@@ -261,10 +259,15 @@ function displayChannels(channels) {
     channels.forEach((channel, index) => {
         const li = document.createElement('li');
         li.textContent = channel.name;
-        li.tabIndex = 0; // Make list items focusable
         li.onclick = () => playChannel(channel);
+        li.dataset.index = index; // Add data-index attribute for navigation
         channelList.appendChild(li);
     });
+
+    // Automatically select the first channel
+    if (channels.length > 0) {
+        selectChannel(0);
+    }
 }
 
 function playChannel(channel) {
@@ -289,85 +292,63 @@ function playChannel(channel) {
     }
 }
 
-function setupControllerEvents() {
-    tizen.tvinputdevice.registerKey('MediaPlayPause');
-    tizen.tvinputdevice.registerKey('ColorF0Red');
-
-    document.addEventListener('keydown', function(e) {
-        switch (e.keyCode) {
-            case tizen.tvinputdevice.getKey('MediaPlayPause').code:
-                if (player.isPlaying()) {
-                    player.pause();
-                } else {
-                    player.play();
-                }
-                break;
-            case 37: // LEFT arrow
-                moveSelection(-1);
-                break;
-            case 38: // UP arrow
-                break;
-            case 39: // RIGHT arrow
-                moveSelection(1);
-                break;
-            case 40: // DOWN arrow
-                break;
-            case 13: // OK button
-                if (selectedIndex >= 0) {
-                    const channel = document.getElementById('channelList').children[selectedIndex];
-                    if (channel) {
-                        playChannel(channels[selectedIndex]);
-                    }
-                }
-                break;
-            case 10009: // RETURN button
-                // Hide the player container (overlay)
-                document.getElementById('playerContainer').style.display = 'none';
-                tizen.application.getCurrentApplication().exit();
-                break;
-            default:
-                console.log('Key code : ' + e.keyCode);
-                break;
-        }
-    });
-}
-
-function setupKeyboardEvents() {
-    document.addEventListener('keydown', function(e) {
-        switch (e.keyCode) {
-            case 37: // LEFT arrow
-                moveSelection(-1);
-                break;
-            case 39: // RIGHT arrow
-                moveSelection(1);
-                break;
-            case 13: // ENTER
-                if (selectedIndex >= 0) {
-                    const channel = document.getElementById('channelList').children[selectedIndex];
-                    if (channel) {
-                        playChannel(channels[selectedIndex]);
-                    }
-                }
-                break;
-            default:
-                break;
-        }
-    });
-}
-
-function moveSelection(direction) {
-    const list = document.getElementById('channelList');
-    const items = list.children;
-    if (items.length === 0) return;
-
-    selectedIndex = (selectedIndex + direction + items.length) % items.length;
-
-    for (let i = 0; i < items.length; i++) {
-        items[i].classList.remove('selected');
+function selectChannel(index) {
+    const channelList = document.getElementById('channelList');
+    const items = channelList.querySelectorAll('li');
+    
+    // Remove the 'selected' class from all items
+    items.forEach(item => item.classList.remove('selected'));
+    
+    // Add the 'selected' class to the currently selected item
+    if (items[index]) {
+        items[index].classList.add('selected');
+        selectedIndex = index;
     }
-    items[selectedIndex].classList.add('selected');
-    items[selectedIndex].focus();
 }
+
+function setupControllerEvents() {
+  tizen.tvinputdevice.registerKey('MediaPlayPause');
+  tizen.tvinputdevice.registerKey('ColorF0Red');
+  tizen.tvinputdevice.registerKey('ArrowUp');
+  tizen.tvinputdevice.registerKey('ArrowDown');
+  tizen.tvinputdevice.registerKey('Enter');
+
+  document.addEventListener('keydown', function(e) {
+    switch (e.keyCode) {
+      case tizen.tvinputdevice.getKey('MediaPlayPause').code:
+        if (player.isPlaying()) {
+          player.pause();
+        } else {
+          player.play();
+        }
+        break;
+      case tizen.tvinputdevice.getKey('ArrowUp').code:
+        if (selectedIndex > 0) {
+          selectChannel(selectedIndex - 1);
+        }
+        break;
+      case tizen.tvinputdevice.getKey('ArrowDown').code:
+        if (selectedIndex < channels.length - 1) {
+          selectChannel(selectedIndex + 1);
+        }
+        break;
+      case tizen.tvinputdevice.getKey('Enter').code:
+        if (selectedIndex !== -1) {
+          playChannel(channels[selectedIndex]);
+        }
+        break;
+      case 10009: // RETURN button
+        // Hide the player container (overlay)
+        document.getElementById('playerContainer').style.display = 'none';
+        tizen.application.getCurrentApplication().exit();
+        break;
+      default:
+        console.log('Key code : ' + e.keyCode);
+        break;
+    }
+  });
+}
+
 </script>
 
 </body>
