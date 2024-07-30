@@ -291,7 +291,7 @@ function playChannel(channel) {
             console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
             drmConfig = {
                 widevine: {
-                    LA_URL: channel.licenseKey
+                    licenseURL: channel.licenseKey
                 }
             };
         }
@@ -308,12 +308,11 @@ function playChannel(channel) {
 
     // Ensure the player is initialized and then load the source
     if (player) {
-        const config = {
-            source: source,
-            drm: drmConfig
-        };
+        if (Object.keys(drmConfig).length > 0) {
+            player.setDRM(drmConfig);
+        }
 
-        player.load(config).then(() => {
+        player.load(source).then(() => {
             console.log(`Playing channel: ${channel.name}`);
         }).catch(error => {
             console.error(`Error playing channel: ${channel.name}`, error);
