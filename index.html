@@ -277,8 +277,8 @@ function displayChannels(channels) {
 
 function playChannel(channel) {
     const url = channel.url;
-    const isDASH = url.endsWith('.mpd');
-    const isHLS = url.endsWith('.m3u8');
+    const isDASH = url.includes('.mpd'); // Use includes to check for .mpd
+    const isHLS = url.includes('.m3u8'); // Use includes to check for .m3u8
 
     let source;
     let drmConfig = {};
