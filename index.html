@@ -113,10 +113,6 @@ function setupPlayer() {
       app_id : "com.bitmovin.demo.webapp",
       BACKWARD_BUFFER_PURGE_INTERVAL: 10,
     },
-    analytics : {
-      videoId: 'YOUR VIDEO ID',
-      title: 'A descriptive video title'
-    },
     buffer: bufferConfig,
     ui: false,
   };
@@ -128,13 +124,13 @@ function setupPlayer() {
     //dash : "https://bitmovin-a.akamaihd.net/content/multi-codec/hevc/stream.mpd"
       
     //DRM AVC Stream
-    dash: 'https://bitmovin-a.akamaihd.net/content/art-of-motion_drm/mpds/11331.mpd',
+    dash: 'https://unifi-live07.secureswiftcontent.com/UnifiHD/live07.mpd',
     drm: {
     //  widevine support is only acceptable from Tizen2017 onward, use playready instead
-    //  widevine: { LA_URL: 'https://widevine-proxy.appspot.com/proxy' }
-      playready: { utf8message: true, plaintextChallenge: true, headers: { 'Content-Type': 'text/xml' } },
+      widevine: { LA_URL: 'https://ottweb.hypp.tv:8064?deviceId=ZWQzZDdiMTMtOWUzMC0zYTFmLTgxMDctMTFmNTY0NDQ1NTNl' }
+    //  playready: { utf8message: true, plaintextChallenge: true, headers: { 'Content-Type': 'text/xml' } },
     },
-    title: 'Art of Motion',
+    title: 'TV AlHijrah HD',
   };
 
   var container = document.getElementById('player');
