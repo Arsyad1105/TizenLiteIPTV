@@ -171,27 +171,17 @@ function setupPlayer() {
   bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
-  bitmovin.player.core.Player.addModule(window.bitmovin.player.smooth.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
 
-  var bufferConfig = {};
-  var bufferLevels = {};
-  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
-  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10;
-  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
-  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
-
   var conf = {
-    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-    playback : {
-      autoplay : true,
+    key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback: {
+      autoplay: true,
     },
-    tweaks : {
-      file_protocol : true,
-      app_id : "com.bitmovin.demo.webapp",
-      BACKWARD_BUFFER_PURGE_INTERVAL: 10,
+    tweaks: {
+      file_protocol: true,
+      app_id: "com.bitmovin.demo.webapp",
     },
-    buffer: bufferConfig,
     ui: false,
   };
 
@@ -291,7 +281,7 @@ function playChannel(channel) {
             console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
             drmConfig = {
                 widevine: {
-                    licenseURL: channel.licenseKey
+                    LA_URL: channel.licenseKey
                 }
             };
         }
@@ -308,11 +298,12 @@ function playChannel(channel) {
 
     // Ensure the player is initialized and then load the source
     if (player) {
-        if (Object.keys(drmConfig).length > 0) {
-            player.setDRM(drmConfig);
-        }
+        const config = {
+            source: source,
+            drm: drmConfig
+        };
 
-        player.load(source).then(() => {
+        player.load(config).then(() => {
             console.log(`Playing channel: ${channel.name}`);
         }).catch(error => {
             console.error(`Error playing channel: ${channel.name}`, error);
