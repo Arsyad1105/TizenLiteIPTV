@@ -255,17 +255,12 @@ function displayChannels(channels) {
     const channelList = document.getElementById('channelList');
     channelList.innerHTML = '';
 
-    channels.forEach((channel, index) => {
+    channels.forEach(channel => {
         const li = document.createElement('li');
         li.textContent = channel.name;
         li.onclick = () => playChannel(channel);
         channelList.appendChild(li);
     });
-
-    // Automatically highlight the first channel
-    if (channels.length > 0) {
-        selectChannel(0);
-    }
 }
 
 function playChannel(channel) {
@@ -290,19 +285,6 @@ function playChannel(channel) {
     }
 }
 
-function selectChannel(index) {
-    const channelListItems = document.querySelectorAll('#channelList li');
-    if (selectedIndex >= 0) {
-        channelListItems[selectedIndex].classList.remove('selected');
-    }
-
-    if (index >= 0 && index < channelListItems.length) {
-        selectedIndex = index;
-        channelListItems[selectedIndex].classList.add('selected');
-        channelListItems[selectedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
 function setupControllerEvents() {
   tizen.tvinputdevice.registerKey('MediaPlayPause');
   tizen.tvinputdevice.registerKey('ColorF0Red');
@@ -319,26 +301,12 @@ function setupControllerEvents() {
       case 37: // LEFT arrow
         break;
       case 38: // UP arrow
-        if (selectedIndex > 0) {
-            selectChannel(selectedIndex - 1);
-        }
         break;
       case 39: // RIGHT arrow
         break;
       case 40: // DOWN arrow
-        const channelListItems = document.querySelectorAll('#channelList li');
-        if (selectedIndex < channelListItems.length - 1) {
-            selectChannel(selectedIndex + 1);
-        }
         break;
       case 13: // OK button
-        const channelListItems = document.querySelectorAll('#channelList li');
-        if (selectedIndex >= 0 && selectedIndex < channelListItems.length) {
-            playChannel({
-                name: channelListItems[selectedIndex].textContent,
-                url: channelListItems[selectedIndex].getAttribute('data-url')
-            });
-        }
         break;
       case 10009: // RETURN button
         // Hide the player container (overlay)
