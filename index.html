@@ -42,45 +42,65 @@
     <script type="text/javascript" src="js/main.js"></script>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f8f8f8; /* Light background color for better contrast */
+    color: #333; /* Dark text color for better readability */
+}
 
-        h1 {
-            margin-top: 20px;
-        }
+h1 {
+    margin-top: 20px;
+    color: #333; /* Ensure heading is visible */
+}
 
-        #channelList {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-        }
+#channelList {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
 
-        #channelList li {
-            cursor: pointer;
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-        }
+#channelList li {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    color: #333; /* Dark text color for list items */
+    background-color: #fff; /* Light background color for list items */
+}
 
-        #channelList li:hover {
-            background-color: #f0f0f0;
-        }
+#channelList li:hover {
+    background-color: #e0e0e0; /* Slightly darker background on hover */
+}
 
-        #playerContainer {
-            margin-top: 20px;
-        }
+#playerContainer {
+    margin-top: 20px;
+}
 
-        #errorContainer {
-            color: red;
-            margin-top: 20px;
-        }
+#errorContainer {
+    color: red;
+    margin-top: 20px;
+}
 
-        #m3uUrlInput {
-            width: 80%;
-            padding: 10px;
-            margin: 20px 0;
-        }
+#m3uUrlInput {
+    width: 80%;
+    padding: 10px;
+    margin: 20px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff; /* Bootstrap primary color */
+    color: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3; /* Darker shade for button hover */
+}
     </style>
 </head>
 <body>
