@@ -149,190 +149,239 @@
 </div>
 
 <script>
-    var player;
-    var selectedIndex = -1;
-    var channels = []; // Store channels globally to access them in key events
+var player;
+var selectedIndex = -1;
+var channels = []; // Store channels globally to access them in key events
 
-    window.onload = function () {
-        setupPlayer();
-        setupControllerEvents();
-    }
+window.onload = function() {
+  setupPlayer();
+  setupControllerEvents();
+}
 
-    function setupPlayer() {
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.polyfill.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player['engine-bitmovin'].default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player['container-mp4'].default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player['container-ts'].default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.mserenderer.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.abr.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.drm.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.xml.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.dash.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.smooth.default);
-        bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
+function setupPlayer() {
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.polyfill.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['engine-bitmovin'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['container-mp4'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player['container-ts'].default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.mserenderer.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.abr.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.drm.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.xml.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.dash.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.smooth.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
 
-        var bufferConfig = {};
-        var bufferLevels = {};
-        bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
-        bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10;
-        bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
-        bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
+  var bufferConfig = {};
+  var bufferLevels = {};
+  bufferLevels[bitmovin.player.core.BufferType.ForwardDuration] = 30;
+  bufferLevels[bitmovin.player.core.BufferType.BackwardDuration] = 10;
+  bufferConfig[bitmovin.player.core.MediaType.Video] = bufferLevels;
+  bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
-        var conf = {
-            key: "1a69b597-a4b2-4bf7-99ba-bd417397c111",
-            playback: {
-                autoplay: true,
-            },
-            tweaks: {
-                file_protocol: true,
-                app_id: "com.bitmovin.demo.web"
-            },
-            buffer: bufferConfig,
-            ui: false
-        };
+  var conf = {
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
+    playback : {
+      autoplay : true,
+    },
+    tweaks : {
+      file_protocol : true,
+      app_id : "com.bitmovin.demo.webapp",
+      BACKWARD_BUFFER_PURGE_INTERVAL: 10,
+    },
+    buffer: bufferConfig,
+    ui: false,
+  };
 
-        const container = document.getElementById('player');
-        player = new bitmovin.player.core.Player(container, conf);
-    }
+  var container = document.getElementById('player');
 
-    async function loadM3U() {
-        const m3uUrl = document.getElementById('m3uUrlInput').value;
-        if (!m3uUrl) {
-            showError('Please enter a valid M3U URL.');
-            return;
-        }
+  player = new bitmovin.player.core.Player(container, conf);
 
-        try {
-            const response = await fetch(m3uUrl);
+  var uiManager = new bitmovin.playerui.UIFactory.buildDefaultTvUI(player);
+
+  player.on(bitmovin.player.core.PlayerEvent.Warning, function(data) {
+    console.log("Warning Event: " + JSON.stringify(data));
+  });
+
+  player.on(bitmovin.player.core.PlayerEvent.Error, function(data) {
+    console.log("Error Event: " + JSON.stringify(data));
+  });
+}
+
+function loadM3U() {
+    const url = document.getElementById('m3uUrlInput').value;
+    const errorContainer = document.getElementById('errorContainer');
+    errorContainer.textContent = ''; // Clear previous errors
+
+    fetch(url)
+        .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to fetch M3U file.');
+                throw new Error(HTTP error! status: ${response.status});
             }
-
-            const m3uContent = await response.text();
-            processM3U(m3uContent);
-        } catch (error) {
-            showError('Error loading M3U file: ' + error.message);
-        }
-    }
-
-    function processM3U(m3uContent) {
-        const lines = m3uContent.split('\n');
-        channels = [];
-        let currentChannel = {};
-        let currentDRM = {};
-
-        lines.forEach(line => {
-            if (line.startsWith('#EXTINF')) {
-                const channelName = line.split(',')[1].trim();
-                currentChannel.name = channelName;
-            } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_type')) {
-                currentDRM.licenseType = line.split('=')[1].trim();
-            } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key')) {
-                currentDRM.licenseKey = line.split('=')[1].trim();
-            } else if (line.startsWith('http')) {
-                currentChannel.url = line.trim();
-                currentChannel.drm = currentDRM;
-                channels.push(currentChannel);
-                currentChannel = {};
-                currentDRM = {};
-            }
+            return response.text();
+        })
+        .then(content => {
+            channels = parseM3U(content); // Store channels globally
+            displayChannels(channels);
+        })
+        .catch(error => {
+            console.error('Error fetching M3U:', error);
+            errorContainer.textContent = Error loading M3U: ${error.message};
         });
+}
 
-        displayChannels();
-    }
+function parseM3U(content) {
+    const lines = content.split('\n');
+    const channels = [];
+    let currentChannel = {};
 
-    function displayChannels() {
-        const channelList = document.getElementById('channelList');
-        channelList.innerHTML = '';
-
-        channels.forEach((channel, index) => {
-            const li = document.createElement('li');
-            li.textContent = channel.name;
-            li.setAttribute('data-index', index);
-            li.addEventListener('click', () => playChannel(index));
-            channelList.appendChild(li);
-        });
-
-        if (channels.length > 0) {
-            selectChannel(0); // Auto-select the first channel
+    lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith('#EXTINF:')) {
+            const [, info] = line.split('#EXTINF:');
+            const [duration, ...rest] = info.split(',');
+            currentChannel = { duration: parseInt(duration, 10), name: rest.join(',').trim() };
+        } 
+        if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
+            // Extract the license URL for Widevine
+            const [, licenseKey] = line.split('inputstream.adaptive.license_key=');
+            currentChannel.licenseKey = licenseKey;
+        } 
+        if (line && !line.startsWith('#')) {
+            currentChannel.url = line;
+            channels.push(currentChannel);
+            currentChannel = {};
         }
+    });
+
+    return channels;
+}
+
+
+function displayChannels(channels) {
+    const channelList = document.getElementById('channelList');
+    channelList.innerHTML = '';
+
+    channels.forEach((channel, index) => {
+        const li = document.createElement('li');
+        li.textContent = channel.name;
+        li.onclick = () => playChannel(channel);
+        li.dataset.index = index; // Add data-index attribute for navigation
+        channelList.appendChild(li);
+    });
+
+    // Automatically select the first channel
+    if (channels.length > 0) {
+        selectChannel(0);
     }
+}
 
-    function playChannel(index) {
-        const channel = channels[index];
+function playChannel(channel) {
+    const url = channel.url;
+    const isDASH = url.includes('.mpd'); // Use includes to check for .mpd
+    const isHLS = url.includes('.m3u8'); // Use includes to check for .m3u8
 
-        if (channel.drm && channel.drm.licenseType === 'com.widevine.alpha') {
-            const drmConfig = {
+    let source;
+    let drmConfig = {};
+
+    if (isDASH) {
+        source = { dash: url, title: channel.name };
+
+        // If Widevine DRM is present, set DRM configuration
+        if (channel.licenseKey) {
+            console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
+            drmConfig = {
                 widevine: {
-                    LA_URL: channel.drm.licenseKey,
+                    licenseURL: channel.licenseKey
                 }
             };
+        }
+    } else if (isHLS) {
+        source = { hls: url, title: channel.name };
+    } else {
+        console.error('Unsupported stream type:', url);
+        return;
+    }
 
-            player.load({
-                src: channel.url,
-                type: 'dash',
-                drm: drmConfig,
-            }).then(
-                () => {
-                    console.log('Successfully loaded channel with Widevine DRM:', channel.name);
-                },
-                (error) => {
-                    console.error('Error loading channel with Widevine DRM:', error);
-                }
-            );
-        } else {
-            player.load({
-                src: channel.url,
-                type: channel.url.endsWith('.m3u8') ? 'hls' : 'dash',
-            }).then(
-                () => {
-                    console.log('Successfully loaded channel:', channel.name);
-                },
-                (error) => {
-                    console.error('Error loading channel:', error);
-                }
-            );
+    // Show the player container as overlay
+    const playerContainer = document.getElementById('playerContainer');
+    playerContainer.style.display = 'block';
+
+    // Ensure the player is initialized and then load the source
+    if (player) {
+        if (Object.keys(drmConfig).length > 0) {
+            player.setDRM(drmConfig);
         }
 
-        document.getElementById('playerContainer').style.display = 'block'; // Show the player container
-
-        selectedIndex = index; // Update the selected index
-        updateChannelSelection(); // Update the selected channel visually
-    }
-
-    function selectChannel(index) {
-        playChannel(index);
-        updateChannelSelection();
-    }
-
-    function updateChannelSelection() {
-        const channelItems = document.querySelectorAll('#channelList li');
-        channelItems.forEach((item, idx) => {
-            item.classList.toggle('selected', idx === selectedIndex);
+        player.load(source).then(() => {
+            console.log(Playing channel: ${channel.name});
+        }).catch(error => {
+            console.error(Error playing channel: ${channel.name}, error);
         });
+    } else {
+        console.error('Player is not initialized.');
     }
+}
+    
+function selectChannel(index) {
+    const channelList = document.getElementById('channelList');
+    const items = channelList.querySelectorAll('li');
+    
+    // Remove the 'selected' class from all items
+    items.forEach(item => item.classList.remove('selected'));
+    
+    // Add the 'selected' class to the currently selected item
+    if (items[index]) {
+        items[index].classList.add('selected');
+        selectedIndex = index;
+    }
+}
 
-    function showError(message) {
-        const errorContainer = document.getElementById('errorContainer');
-        errorContainer.textContent = message;
-    }
+function setupControllerEvents() {
+  tizen.tvinputdevice.registerKey('MediaPlayPause');
+  tizen.tvinputdevice.registerKey('ColorF0Red');
+  tizen.tvinputdevice.registerKey('ArrowUp');
+  tizen.tvinputdevice.registerKey('ArrowDown');
+  tizen.tvinputdevice.registerKey('Enter');
 
-    function setupControllerEvents() {
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowUp') {
-                selectedIndex = (selectedIndex > 0) ? selectedIndex - 1 : channels.length - 1;
-                selectChannel(selectedIndex);
-            } else if (event.key === 'ArrowDown') {
-                selectedIndex = (selectedIndex < channels.length - 1) ? selectedIndex + 1 : 0;
-                selectChannel(selectedIndex);
-            } else if (event.key === 'Enter') {
-                playChannel(selectedIndex);
-            }
-        });
+  document.addEventListener('keydown', function(e) {
+    switch (e.keyCode) {
+      case tizen.tvinputdevice.getKey('MediaPlayPause').code:
+        if (player.isPlaying()) {
+          player.pause();
+        } else {
+          player.play();
+        }
+        break;
+      case tizen.tvinputdevice.getKey('ArrowUp').code:
+        if (selectedIndex > 0) {
+          selectChannel(selectedIndex - 1);
+        }
+        break;
+      case tizen.tvinputdevice.getKey('ArrowDown').code:
+        if (selectedIndex < channels.length - 1) {
+          selectChannel(selectedIndex + 1);
+        }
+        break;
+      case tizen.tvinputdevice.getKey('Enter').code:
+        if (selectedIndex !== -1) {
+          playChannel(channels[selectedIndex]);
+        }
+        break;
+      case 10009: // RETURN button
+        // Hide the player container (overlay)
+        document.getElementById('playerContainer').style.display = 'none';
+        tizen.application.getCurrentApplication().exit();
+        break;
+      default:
+        console.log('Key code : ' + e.keyCode);
+        break;
     }
+  });
+}
+
 </script>
 </body>
 </html>
