@@ -30,7 +30,7 @@ function setupPlayer() {
   bufferConfig[bitmovin.player.core.MediaType.Audio] = bufferLevels;
 
   var conf = {
-    key : "fba29d36-759d-4de3-971d-b0a89d7f84e8",
+    key : "1a69b597-a4b2-4bf7-99ba-bd417397c111",
     playback : {
       autoplay : true,
     },
