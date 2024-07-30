@@ -171,6 +171,7 @@ function setupPlayer() {
   bitmovin.player.core.Player.addModule(window.bitmovin.player.hls.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.crypto.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.style.default);
+  bitmovin.player.core.Player.addModule(window.bitmovin.player.smooth.default);
   bitmovin.player.core.Player.addModule(window.bitmovin.player.tizen.default);
 
   var bufferConfig = {};
@@ -271,11 +272,28 @@ function displayChannels(channels) {
 }
 
 function playChannel(channel) {
-    const source = {
-        hls: channel.url,
-        dash: channel.url,
-        title: channel.name,
-    };
+    const url = channel.url;
+    const isDASH = url.endsWith('.mpd');
+    const isHLS = url.endsWith('.m3u8');
+
+    let source;
+
+    if (isDASH) {
+        source = { dash: url, title: channel.name };
+        // Check if Widevine DRM is required
+        if (channel.licenseKey) {
+            player.setDRM({
+                widevine: {
+                    licenseURL: channel.licenseKey
+                }
+            });
+        }
+    } else if (isHLS) {
+        source = { hls: url, title: channel.name };
+    } else {
+        console.error('Unsupported stream type:', url);
+        return;
+    }
 
     // Show the player container as overlay
     const playerContainer = document.getElementById('playerContainer');
