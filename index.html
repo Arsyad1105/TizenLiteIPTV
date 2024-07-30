@@ -243,6 +243,10 @@ function parseM3U(content) {
             const [, info] = line.split('#EXTINF:');
             const [duration, ...rest] = info.split(',');
             currentChannel = { duration: parseInt(duration, 10), name: rest.join(',').trim() };
+        } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
+            // Extract the license URL for Widevine
+            const [, licenseKey] = line.split('inputstream.adaptive.license_key=');
+            currentChannel.licenseKey = licenseKey;
         } else if (line && !line.startsWith('#')) {
             currentChannel.url = line;
             channels.push(currentChannel);
@@ -277,17 +281,19 @@ function playChannel(channel) {
     const isHLS = url.endsWith('.m3u8');
 
     let source;
+    let drmConfig = {};
 
     if (isDASH) {
         source = { dash: url, title: channel.name };
-        // Check if Widevine DRM is required
+
+        // If Widevine DRM is present, set DRM configuration
         if (channel.licenseKey) {
             console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
-            player.setDRM({
+            drmConfig = {
                 widevine: {
                     licenseURL: channel.licenseKey
                 }
-            });
+            };
         }
     } else if (isHLS) {
         source = { hls: url, title: channel.name };
@@ -302,6 +308,10 @@ function playChannel(channel) {
 
     // Ensure the player is initialized and then load the source
     if (player) {
+        if (Object.keys(drmConfig).length > 0) {
+            player.setDRM(drmConfig);
+        }
+
         player.load(source).then(() => {
             console.log(`Playing channel: ${channel.name}`);
         }).catch(error => {
