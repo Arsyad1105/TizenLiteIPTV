@@ -282,6 +282,7 @@ function playChannel(channel) {
         source = { dash: url, title: channel.name };
         // Check if Widevine DRM is required
         if (channel.licenseKey) {
+            console.log('Setting Widevine DRM with license URL:', channel.licenseKey);
             player.setDRM({
                 widevine: {
                     licenseURL: channel.licenseKey
