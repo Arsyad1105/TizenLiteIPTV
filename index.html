@@ -151,6 +151,7 @@ button:hover {
 <script>
 var player;
 var selectedIndex = -1;
+var channels = []; // Store channels globally to access them in key events
 
 window.onload = function() {
   setupPlayer();
@@ -221,7 +222,7 @@ function loadM3U() {
             return response.text();
         })
         .then(content => {
-            const channels = parseM3U(content);
+            channels = parseM3U(content); // Store channels globally
             displayChannels(channels);
         })
         .catch(error => {
@@ -255,12 +256,18 @@ function displayChannels(channels) {
     const channelList = document.getElementById('channelList');
     channelList.innerHTML = '';
 
-    channels.forEach(channel => {
+    channels.forEach((channel, index) => {
         const li = document.createElement('li');
         li.textContent = channel.name;
         li.onclick = () => playChannel(channel);
+        li.dataset.index = index; // Add data-index attribute for navigation
         channelList.appendChild(li);
     });
+
+    // Automatically select the first channel
+    if (channels.length > 0) {
+        selectChannel(0);
+    }
 }
 
 function playChannel(channel) {
@@ -285,9 +292,26 @@ function playChannel(channel) {
     }
 }
 
+function selectChannel(index) {
+    const channelList = document.getElementById('channelList');
+    const items = channelList.querySelectorAll('li');
+    
+    // Remove the 'selected' class from all items
+    items.forEach(item => item.classList.remove('selected'));
+    
+    // Add the 'selected' class to the currently selected item
+    if (items[index]) {
+        items[index].classList.add('selected');
+        selectedIndex = index;
+    }
+}
+
 function setupControllerEvents() {
   tizen.tvinputdevice.registerKey('MediaPlayPause');
   tizen.tvinputdevice.registerKey('ColorF0Red');
+  tizen.tvinputdevice.registerKey('ArrowUp');
+  tizen.tvinputdevice.registerKey('ArrowDown');
+  tizen.tvinputdevice.registerKey('Enter');
 
   document.addEventListener('keydown', function(e) {
     switch (e.keyCode) {
@@ -298,15 +322,20 @@ function setupControllerEvents() {
           player.play();
         }
         break;
-      case 37: // LEFT arrow
+      case tizen.tvinputdevice.getKey('ArrowUp').code:
+        if (selectedIndex > 0) {
+          selectChannel(selectedIndex - 1);
+        }
         break;
-      case 38: // UP arrow
+      case tizen.tvinputdevice.getKey('ArrowDown').code:
+        if (selectedIndex < channels.length - 1) {
+          selectChannel(selectedIndex + 1);
+        }
         break;
-      case 39: // RIGHT arrow
-        break;
-      case 40: // DOWN arrow
-        break;
-      case 13: // OK button
+      case tizen.tvinputdevice.getKey('Enter').code:
+        if (selectedIndex !== -1) {
+          playChannel(channels[selectedIndex]);
+        }
         break;
       case 10009: // RETURN button
         // Hide the player container (overlay)
@@ -319,6 +348,7 @@ function setupControllerEvents() {
     }
   });
 }
+
 </script>
 
 </body>
